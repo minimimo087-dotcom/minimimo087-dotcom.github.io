@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel de gestión · TahaAir</title>
+<meta name="description" content="Panel de gestión de reclamaciones CE 261 de TahaAir: indicadores y casos, conectado a un CRM en Google Sheets.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #0A0506; --surface: #150A0C; --surface-2: #1E0D10; --ink: #F6EDED; --muted: #A98C90; --line: #3B1A20;
+    --accent: #FF3347; --accent-ink: #1A0003; --accent-soft: rgba(255,51,71,.14); --signal: #FFB347; --ok: #5ED394;
+    --glow: rgba(255,40,60,.20);
+    --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    --bg: #F8F0F0; --surface: #FFFFFF; --surface-2: #FCF5F5; --ink: #1E0B0E; --muted: #7A5A5F; --line: #E6CFD2;
+    --accent: #C4112A; --accent-ink: #FFFFFF; --accent-soft: rgba(196,17,42,.09); --signal: #B7790B; --ok: #1B7F4B;
+    --glow: rgba(196,17,42,.12); color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font-body); padding: 0 max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px)); }
+  body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 45% at 85% 0%, var(--glow), transparent 70%), radial-gradient(45% 35% at 5% 100%, rgba(120,10,60,.25), transparent 70%); }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  a { color: inherit; }
+  h1, h2, h3 { font-family: var(--font-display); margin: 0; line-height: 1.08; letter-spacing: -0.02em; }
+  .mono { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  header.top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 20px 0; }
+  .brand { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-display); font-weight: 800; font-size: 19px; text-decoration: none; margin-inline-end: auto; }
+  .brand svg { width: 24px; height: 24px; color: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
+  .back { text-decoration: none; color: var(--muted); font-size: 14.5px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 4px; }
+  .back:hover { color: var(--ink); border-color: var(--accent); }
+  .title { margin: 28px 0 8px; display: flex; gap: 16px; align-items: end; flex-wrap: wrap; }
+  .title h1 { font-size: clamp(32px, 5vw, 56px); font-weight: 800; }
+  .title .meta { margin-inline-start: auto; text-align: end; }
+  .sub { color: var(--muted); max-width: 70ch; }
+  .state { display: inline-flex; align-items: center; gap: 8px; }
+  .state i { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+  .state.demo i { background: var(--signal); }
+  button.act { font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; padding: 7px 14px; border-radius: 4px; border: 1px solid var(--accent); background: transparent; color: var(--accent); }
+  button.act:hover { background: var(--accent-soft); }
+  button.act:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 26px; }
+  .kpi { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 18px 20px; }
+  .kpi strong { display: block; font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 42px); line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .kpi span { display: block; margin-top: 8px; color: var(--muted); font-size: 14px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .panel { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 20px; min-width: 0; }
+  .panel h2 { font-size: 20px; margin-bottom: 14px; }
+  .bars { display: grid; gap: 11px; }
+  .bar .row { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+  .bar .row b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .bar .track { height: 8px; background: var(--surface-2); border-radius: 4px; margin-top: 5px; overflow: hidden; border: 1px solid var(--line); }
+  .bar .fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .donut-wrap { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .donut { width: 118px; height: 118px; border-radius: 50%; flex: none; position: relative; }
+  .donut::after { content: ""; position: absolute; inset: 24px; background: var(--surface); border-radius: 50%; }
+  .legend { display: grid; gap: 7px; font-size: 14px; list-style: none; padding: 0; margin: 0; }
+  .legend li { display: flex; align-items: center; gap: 8px; }
+  .legend i { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .legend b { margin-inline-start: auto; font-variant-numeric: tabular-nums; padding-inline-start: 10px; }
+
+  .tablebox { margin-top: 14px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 20px; }
+  .tablebox .head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .tablebox h2 { font-size: 20px; margin-inline-end: auto; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { font-family: var(--font-mono); font-size: 12px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+  .chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 760px; }
+  th { text-align: start; font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 11px 10px; border-bottom: 1px dashed var(--line); font-variant-numeric: tabular-nums; }
+  td.num, th.num { text-align: end; }
+  tr:last-child td { border-bottom: 0; }
+  .tag { display: inline-block; font-family: var(--font-mono); font-size: 11.5px; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--line); }
+  .tag.si { color: var(--ok); border-color: var(--ok); }
+  .tag.no { color: var(--muted); }
+  .tag.pend { color: var(--signal); border-color: var(--signal); }
+  .tag.ok { color: var(--ok); border-color: var(--ok); }
+  .note { margin-top: 18px; color: var(--muted); font-size: 13.5px; max-width: 80ch; }
+  .err { border: 1px solid var(--signal); color: var(--signal); border-radius: 8px; padding: 10px 14px; margin-top: 18px; font-size: 14px; }
+  .err[hidden] { display: none; }
+
+  @media (max-width: 900px) { .kpis { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } .title .meta { margin-inline-start: 0; text-align: start; } }
+  @media (max-width: 480px) { .kpis { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="index.html" aria-label="Taha Aboussif">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 1.5 4 13.5h6.2L9 22.5l10-13h-6.4z" fill="currentColor"/></svg>
+      Taha Aboussif
+    </a>
+    <a class="back" href="index.html#proyectos">← Volver a proyectos</a>
+  </header>
+
+  <div class="title">
+    <div>
+      <p class="mono">Proyecto · TahaAir</p>
+      <h1>Panel de gestión</h1>
+    </div>
+    <div class="meta">
+      <p class="mono state" id="state"><i></i><span id="state-text">Cargando…</span></p>
+      <button class="act" id="reload" type="button" style="margin-top:8px">Actualizar</button>
+    </div>
+  </div>
+  <p class="sub">Vista de las reclamaciones por el Reglamento CE 261/2004. Los datos salen de un CRM en Google Sheets y se leen en directo.</p>
+  <div class="err" id="err" hidden></div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid">
+    <section class="panel"><h2>Compensación por tipo de incidencia</h2><div class="bars" id="bars-tipo"></div></section>
+    <section class="panel"><h2>Casos por aerolínea</h2><div class="bars" id="bars-aero"></div></section>
+    <section class="panel"><h2>Estado de notificación</h2><div class="donut-wrap"><div class="donut" id="donut" role="img" aria-label="Reparto por estado"></div><ul class="legend" id="legend"></ul></div></section>
+  </div>
+
+  <section class="tablebox">
+    <div class="head">
+      <h2>Casos</h2>
+      <div class="chips" id="filters" role="group" aria-label="Filtrar por elegibilidad"></div>
+    </div>
+    <div class="scroll"><table>
+      <thead><tr><th>Expediente</th><th>Pasajero</th><th>Vuelo</th><th>Ruta</th><th>Incidencia</th><th class="num">Retraso</th><th class="num">Compensación</th><th>Elegible</th><th>Estado</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+
+  <p class="note">Datos sintéticos de demostración. Los nombres se muestran abreviados y no se enseñan correos ni teléfonos. El panel lee el CRM publicado como CSV; si no puede conectarse, muestra una copia de ejemplo.</p>
+</div>
+
+<script>
+(function () {
+  var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSUPe2RMDvJKsmm3UGjtiC1Zd_zVyt2dHbRQI6VAo-r1E2ohCbF-cwQSxkGFgVqxSKMYIKlYcIHGJzR/pub?gid=1875536964&single=true&output=csv";
+  var FALLBACK = [{"ID Expediente": "EXP-2026-001", "Nombre Pasajero": "Juan", "Apellidos": "G", "Numero Vuelo": "UX5031", "Vuelo Afectado": "AEA5031", "Aerolinea": "Air Europa", "IATA Origen": "MAD", "IATA Destino": "AGP", "Retraso Llegada Min": "185", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-002", "Nombre Pasajero": "María", "Apellidos": "L", "Numero Vuelo": "VY3456", "Vuelo Afectado": "VLG3456", "Aerolinea": "Vueling", "IATA Origen": "BCN", "IATA Destino": "LHR", "Retraso Llegada Min": "0", "Tipo Incidencia": "cancellation", "Compensacion EUR": "400", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-003", "Nombre Pasajero": "Ahmed", "Apellidos": "B", "Numero Vuelo": "AT504", "Vuelo Afectado": "AT504", "Aerolinea": "Royal Air Maroc", "IATA Origen": "MAD", "IATA Destino": "CMN", "Retraso Llegada Min": "260", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-004", "Nombre Pasajero": "Elena", "Apellidos": "M", "Numero Vuelo": "IB6250", "Vuelo Afectado": "IB6250", "Aerolinea": "Iberia", "IATA Origen": "MAD", "IATA Destino": "JFK", "Retraso Llegada Min": "375", "Tipo Incidencia": "delay", "Compensacion EUR": "600", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-005", "Nombre Pasajero": "Carlos", "Apellidos": "R", "Numero Vuelo": "U21895", "Vuelo Afectado": "U21895", "Aerolinea": "easyJet", "IATA Origen": "MAD", "IATA Destino": "FCO", "Retraso Llegada Min": "110", "Tipo Incidencia": "delay", "Compensacion EUR": "0", "Elegible Compensacion": "NO", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-006", "Nombre Pasajero": "Fatima", "Apellidos": "O", "Numero Vuelo": "AF1234", "Vuelo Afectado": "AF1234", "Aerolinea": "Air France", "IATA Origen": "CDG", "IATA Destino": "MAD", "Retraso Llegada Min": "0", "Tipo Incidencia": "cancellation", "Compensacion EUR": "0", "Elegible Compensacion": "NO", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-007", "Nombre Pasajero": "Pedro", "Apellidos": "S", "Numero Vuelo": "UX5031", "Vuelo Afectado": "AEA5031", "Aerolinea": "Air Europa", "IATA Origen": "MAD", "IATA Destino": "AGP", "Retraso Llegada Min": "185", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-008", "Nombre Pasajero": "Anna", "Apellidos": "K", "Numero Vuelo": "LH1806", "Vuelo Afectado": "LH1806", "Aerolinea": "Lufthansa", "IATA Origen": "MAD", "IATA Destino": "FRA", "Retraso Llegada Min": "0", "Tipo Incidencia": "denied_boarding", "Compensacion EUR": "400", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-009", "Nombre Pasajero": "Mohammed", "Apellidos": "A", "Numero Vuelo": "IB3166", "Vuelo Afectado": "IB3166", "Aerolinea": "Iberia", "IATA Origen": "LHR", "IATA Destino": "MAD", "Retraso Llegada Min": "380", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-010", "Nombre Pasajero": "Isabelle", "Apellidos": "D", "Numero Vuelo": "IB6401", "Vuelo Afectado": "IB6401", "Aerolinea": "Iberia", "IATA Origen": "MAD", "IATA Destino": "DXB", "Retraso Llegada Min": "0", "Tipo Incidencia": "delay", "Compensacion EUR": "0", "Elegible Compensacion": "PENDIENTE", "Estado Notificacion": "PENDIENTE"}];
+  var TIPOS = { delay: "Retraso", cancellation: "Cancelación", denied_boarding: "Denegación de embarque", downgrade: "Cambio a clase inferior" };
+  var data = [], filtro = "todos";
+
+  function parseCSV(t) {
+    var rows = [], row = [], f = "", q = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true;
+      else if (c === ",") { row.push(f); f = ""; }
+      else if (c === "\n") { row.push(f); rows.push(row); row = []; f = ""; }
+      else if (c !== "\r") f += c;
+    }
+    if (f.length || row.length) { row.push(f); rows.push(row); }
+    var h = rows.shift().map(function (x) { return x.trim().replace(/^﻿/, ""); });
+    return rows.filter(function (r) { return r.length > 3 && r[0].trim(); }).map(function (r) {
+      var o = {}; h.forEach(function (k, i) { o[k] = (r[i] || "").trim(); }); return o;
+    });
+  }
+  function mask(n, a) {
+    var i = function (s) { return s ? s.trim().charAt(0).toUpperCase() + "." : ""; };
+    return (n ? n.trim().split(/\s+/)[0] : "") + " " + i((a || "").split(/\s+/)[0]);
+  }
+  function norm(r) {
+    return {
+      id: r["ID Expediente"], pax: mask(r["Nombre Pasajero"], r["Apellidos"]), vuelo: r["Vuelo Afectado"] || r["Numero Vuelo"],
+      aero: r["Aerolinea"], ruta: (r["IATA Origen"] || "") + " → " + (r["IATA Destino"] || ""),
+      tipo: r["Tipo Incidencia"], ret: parseInt(r["Retraso Llegada Min"] || "0", 10) || 0,
+      comp: parseFloat((r["Compensacion EUR"] || "0").replace(",", ".")) || 0,
+      eleg: (r["Elegible Compensacion"] || "").toUpperCase().replace("Í", "I"), estado: (r["Estado Notificacion"] || "").toUpperCase() || "SIN ESTADO"
+    };
+  }
+  function eur(n) { return n.toLocaleString("es-ES") + " €"; }
+  function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  function group(list, key, val) { var m = {}; list.forEach(function (x) { var k = x[key] || "—"; m[k] = (m[k] || 0) + val(x); }); return Object.keys(m).map(function (k) { return [k, m[k]]; }).sort(function (a, b) { return b[1] - a[1]; }); }
+
+  function bars(id, pairs, fmt) {
+    var box = document.getElementById(id); box.textContent = "";
+    var max = Math.max.apply(null, pairs.map(function (p) { return p[1]; }).concat([1]));
+    pairs.forEach(function (p) {
+      var b = el("div", "bar"), r = el("div", "row"); r.appendChild(el("span", "", p[0])); r.appendChild(el("b", "", fmt(p[1])));
+      var t = el("div", "track"), f = el("div", "fill"); f.style.width = (p[1] / max * 100) + "%"; t.appendChild(f);
+      b.appendChild(r); b.appendChild(t); box.appendChild(b);
+    });
+  }
+  var COLORS = ["#FF3347", "#FFB347", "#B04A9E", "#5ED394", "#6E8BFF", "#A98C90"];
+  function render() {
+    var eleg = data.filter(function (d) { return d.eleg === "SI"; });
+    var total = eleg.reduce(function (s, d) { return s + d.comp; }, 0);
+    var pend = data.filter(function (d) { return d.estado === "PENDIENTE"; }).length;
+    var k = document.getElementById("kpis"); k.textContent = "";
+    [[data.length, "casos en el CRM"], [eleg.length, "elegibles para compensación"], [eur(total), "compensación estimada total"], [pend, "pendientes de notificar"]].forEach(function (x) {
+      var d = el("div", "kpi"); d.appendChild(el("strong", "", String(x[0]))); d.appendChild(el("span", "", x[1])); k.appendChild(d);
+    });
+    bars("bars-tipo", group(eleg, "tipo", function (x) { return x.comp; }).map(function (p) { return [TIPOS[p[0]] || p[0], p[1]]; }), eur);
+    bars("bars-aero", group(data, "aero", function () { return 1; }), function (n) { return n + (n === 1 ? " caso" : " casos"); });
+    var est = group(data, "estado", function () { return 1; }), acc = 0, parts = [], lg = document.getElementById("legend"); lg.textContent = "";
+    est.forEach(function (p, i) {
+      var c = COLORS[i % COLORS.length], a0 = acc / data.length * 360; acc += p[1]; parts.push(c + " " + a0 + "deg " + (acc / data.length * 360) + "deg");
+      var li = el("li"), sw = el("i"); sw.style.background = c; li.appendChild(sw); li.appendChild(el("span", "", p[0])); li.appendChild(el("b", "", String(p[1]))); lg.appendChild(li);
+    });
+    document.getElementById("donut").style.background = "conic-gradient(" + (parts.join(",") || "#3B1A20 0deg 360deg") + ")";
+    filters(); table();
+  }
+  function filters() {
+    var f = document.getElementById("filters"); f.textContent = "";
+    [["todos", "Todos"], ["SI", "Elegibles"], ["NO", "No elegibles"], ["PEND", "Pendientes"]].forEach(function (o) {
+      var b = el("button", "chip", o[1]); b.type = "button"; b.setAttribute("aria-pressed", filtro === o[0] ? "true" : "false");
+      b.addEventListener("click", function () { filtro = o[0]; filters(); table(); }); f.appendChild(b);
+    });
+  }
+  function table() {
+    var tb = document.getElementById("rows"); tb.textContent = "";
+    data.filter(function (d) { return filtro === "todos" || (filtro === "PEND" ? d.estado === "PENDIENTE" : d.eleg === filtro); }).forEach(function (d) {
+      var tr = el("tr");
+      [d.id, d.pax, d.vuelo, d.ruta, TIPOS[d.tipo] || d.tipo].forEach(function (t) { tr.appendChild(el("td", "", t)); });
+      tr.appendChild(el("td", "num", d.ret ? d.ret + " min" : "—")); tr.appendChild(el("td", "num", d.comp ? eur(d.comp) : "—"));
+      var t1 = el("td"); t1.appendChild(el("span", "tag " + (d.eleg === "SI" ? "si" : "no"), d.eleg === "SI" ? "Sí" : (d.eleg === "NO" ? "No" : d.eleg || "—"))); tr.appendChild(t1);
+      var t2 = el("td"); t2.appendChild(el("span", "tag " + (d.estado === "PENDIENTE" ? "pend" : "ok"), d.estado)); tr.appendChild(t2);
+      tb.appendChild(tr);
+    });
+  }
+  function setState(live, msg) {
+    var s = document.getElementById("state"); s.className = "mono state" + (live ? "" : " demo");
+    document.getElementById("state-text").textContent = msg;
+  }
+  function load() {
+    var err = document.getElementById("err"); err.hidden = true; setState(true, "Conectando con el CRM…");
+    var ctrl = new AbortController(), to = setTimeout(function () { ctrl.abort(); }, 9000);
+    fetch(CSV_URL + "&t=" + Date.now(), { signal: ctrl.signal }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) { clearTimeout(to); data = parseCSV(t).map(norm); if (!data.length) throw new Error("vacío"); setState(true, "En directo · " + new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })); render(); })
+      .catch(function () {
+        clearTimeout(to); data = FALLBACK.map(norm); setState(false, "Copia de ejemplo"); render();
+        err.textContent = "No se pudo leer el CRM en directo desde este navegador. Se muestra una copia de ejemplo con los mismos datos."; err.hidden = false;
+      });
+  }
+  document.getElementById("reload").addEventListener("click", load);
+  try { if (localStorage.getItem("taha-tema-v2") === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
+  load();
+})();
+</script>
+</body>
+</html>
