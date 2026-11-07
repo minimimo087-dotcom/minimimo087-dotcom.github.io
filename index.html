@@ -137,6 +137,19 @@
   .assistant p { color: var(--muted); max-width: 52ch; }
   .assistant button { font: inherit; font-weight: 600; cursor: pointer; padding: 12px 22px; border-radius: 4px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); }
   .assistant button[disabled] { background: transparent; color: var(--muted); border-color: var(--line); cursor: not-allowed; }
+  #fab { position: fixed; right: max(18px, env(safe-area-inset-right, 0px)); bottom: 18px; z-index: 90; display: flex; align-items: center; gap: 10px; flex-direction: row-reverse; }
+  #fab[hidden] { display: none; }
+  #fab button { width: 64px; height: 64px; border-radius: 50%; border: 1.5px solid var(--accent); background: radial-gradient(circle at 30% 25%, var(--surface-2), var(--bg)); cursor: pointer; padding: 0; display: grid; place-items: center; box-shadow: 0 14px 34px -10px rgba(0,0,0,.8), 0 0 26px -6px var(--accent); animation: bob 3.4s ease-in-out infinite; transition: transform .2s; }
+  #fab button:hover { transform: scale(1.1) rotate(-4deg); }
+  #fab button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  #fab svg { width: 40px; height: 40px; overflow: visible; }
+  #fab .eye { animation: blink 4.5s infinite; transform-origin: center; transform-box: fill-box; }
+  #fab .led { animation: led 1.6s ease-in-out infinite; }
+  #fab .tip { background: var(--surface); color: var(--ink); border: 1px solid var(--accent); border-radius: 8px; padding: 7px 12px; font-size: 14px; font-weight: 500; white-space: nowrap; box-shadow: 0 10px 24px -12px rgba(0,0,0,.8); opacity: 0; transform: translateX(8px); pointer-events: none; transition: opacity .3s, transform .3s; }
+  #fab .tip.show, #fab:hover .tip { opacity: 1; transform: none; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes blink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+  @keyframes led { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
   #chat-panel { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: 16px; z-index: 100; width: min(400px, calc(100vw - 32px)); height: min(600px, calc(100vh - 100px)); display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; box-shadow: 0 30px 80px -20px rgba(0,0,0,.8), 0 0 40px -10px var(--accent); overflow: hidden; }
   #chat-panel[hidden] { display: none; }
   #chat-panel .cp-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
@@ -194,6 +207,7 @@
     .f1 { inset-inline-start: -2%; } .f3 { inset-inline-start: -2%; } .f2 { inset-inline-end: -2%; }
   }
   @media (prefers-reduced-motion: reduce) {
+    #fab button, #fab .eye, #fab .led { animation: none; }
     html { scroll-behavior: auto; }
     .floor { animation: none; } .brand .bolt { animation: none; }
     .photo-card, .card, .timeline li { transition: none; }
@@ -563,9 +577,33 @@
   }
   texts();
   document.querySelectorAll(".flag-btn").forEach(function (b) { b.addEventListener("click", function () { setTimeout(texts, 0); }); });
-  btn.addEventListener("click", function () { if (!frame.src) frame.src = URL_CHAT; panel.hidden = false; });
-  x.addEventListener("click", function () { panel.hidden = true; });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") panel.hidden = true; });
+  /* Robot flotante en todas las secciones */
+  var fab = document.createElement("div"); fab.id = "fab";
+  fab.innerHTML = '<button type="button" id="fab-btn"><svg viewBox="0 0 48 48" aria-hidden="true">'
+    + '<line x1="24" y1="4" x2="24" y2="11" stroke="#FF3347" stroke-width="2.4" stroke-linecap="round"/>'
+    + '<circle class="led" cx="24" cy="4" r="3" fill="#FF3347"/>'
+    + '<rect x="9" y="11" width="30" height="24" rx="9" fill="#1E0D10" stroke="#FF3347" stroke-width="2.2"/>'
+    + '<rect x="4" y="19" width="4" height="9" rx="2" fill="#FF3347"/><rect x="40" y="19" width="4" height="9" rx="2" fill="#FF3347"/>'
+    + '<rect x="13.5" y="17" width="21" height="12" rx="6" fill="#0A0506"/>'
+    + '<ellipse class="eye" cx="19.5" cy="23" rx="3" ry="3.4" fill="#FF3347"/><ellipse class="eye" cx="28.5" cy="23" rx="3" ry="3.4" fill="#FF3347"/>'
+    + '<path d="M19 31.5q5 3 10 0" stroke="#FF3347" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
+    + '<path d="M16 35v4h16v-4" fill="#1E0D10" stroke="#FF3347" stroke-width="2"/></svg></button><span class="tip" id="fab-tip"></span>';
+  document.body.appendChild(fab);
+  var fabBtn = fab.querySelector("#fab-btn"), tip = fab.querySelector("#fab-tip");
+  function fabTexts() {
+    var en = document.documentElement.lang === "en";
+    tip.textContent = en ? "Chat with me" : "¿Hablamos?";
+    fabBtn.setAttribute("aria-label", en ? "Open the assistant chat" : "Abrir el chat del asistente");
+  }
+  fabTexts();
+  document.querySelectorAll(".flag-btn").forEach(function (b) { b.addEventListener("click", function () { setTimeout(fabTexts, 0); }); });
+  setTimeout(function () { tip.classList.add("show"); setTimeout(function () { tip.classList.remove("show"); }, 6000); }, 2500);
+  function openChat() { if (!frame.src) frame.src = URL_CHAT; panel.hidden = false; fab.hidden = true; }
+  function closeChat() { panel.hidden = true; fab.hidden = false; }
+  btn.addEventListener("click", openChat);
+  fabBtn.addEventListener("click", openChat);
+  x.addEventListener("click", closeChat);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !panel.hidden) closeChat(); });
 })();
 </script>
 
