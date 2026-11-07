@@ -19,13 +19,6 @@
     --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
     color-scheme: dark;
   }
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-      --bg: #F8F0F0; --surface: #FFFFFF; --surface-2: #FCF5F5; --ink: #1E0B0E; --muted: #7A5A5F; --line: #E6CFD2;
-      --accent: #C4112A; --accent-ink: #FFFFFF; --accent-soft: rgba(196,17,42,.09); --signal: #B7790B; --ok: #1B7F4B;
-      --glow: rgba(196,17,42,.12); color-scheme: light;
-    }
-  }
   :root[data-theme="light"] {
     --bg: #F8F0F0; --surface: #FFFFFF; --surface-2: #FCF5F5; --ink: #1E0B0E; --muted: #7A5A5F; --line: #E6CFD2;
     --accent: #C4112A; --accent-ink: #FFFFFF; --accent-soft: rgba(196,17,42,.09); --signal: #B7790B; --ok: #1B7F4B;
@@ -222,6 +215,7 @@
       <a href="#inicio" data-i18n="nav_home"></a>
       <a href="#sobre-mi" data-i18n="nav_about"></a>
       <a href="#proyectos" data-i18n="nav_projects"></a>
+      <a href="#asistente" data-i18n="nav_assistant"></a>
       <a href="#formacion" data-i18n="nav_edu"></a>
       <a href="#contacto" data-i18n="nav_contact"></a>
     </nav>
@@ -238,7 +232,7 @@
 </header>
 
 <nav class="dots" id="dots" aria-hidden="true">
-  <a href="#inicio"></a><a href="#sobre-mi"></a><a href="#proyectos"></a><a href="#formacion"></a><a href="#contacto"></a>
+  <a href="#inicio"></a><a href="#sobre-mi"></a><a href="#proyectos"></a><a href="#asistente"></a><a href="#formacion"></a><a href="#contacto"></a>
 </nav>
 
 <div id="stage">
@@ -392,7 +386,7 @@
   var T = {
     es: {
       _dir: "ltr", _title: "Taha Aboussif · Automatización e IA",
-      nav_label: "Principal", nav_home: "Inicio", nav_about: "Sobre mí", nav_projects: "Proyectos", nav_edu: "Formación", nav_contact: "Contacto",
+      nav_label: "Principal", nav_home: "Inicio", nav_about: "Sobre mí", nav_projects: "Proyectos", nav_assistant: "Asistente", nav_edu: "Formación", nav_contact: "Contacto",
       theme_label: "Cambiar entre modo claro y oscuro",
       hero_kicker: "Taha Aboussif",
       hero_title: "Ingeniero de IA y <em>analista de datos</em>.",
@@ -435,7 +429,7 @@
     },
     en: {
       _dir: "ltr", _title: "Taha Aboussif · Automation & AI",
-      nav_label: "Main", nav_home: "Home", nav_about: "About", nav_projects: "Projects", nav_edu: "Education", nav_contact: "Contact",
+      nav_label: "Main", nav_home: "Home", nav_about: "About", nav_projects: "Projects", nav_assistant: "Assistant", nav_edu: "Education", nav_contact: "Contact",
       theme_label: "Switch between light and dark mode",
       hero_kicker: "Taha Aboussif",
       hero_title: "AI Engineer and <em>Data Analyst</em>.",
@@ -541,7 +535,7 @@
   try { var tema = localStorage.getItem("taha-tema"); if (tema) root.setAttribute("data-theme", tema); } catch (e) {}
   document.getElementById("theme").addEventListener("click", function () {
     var actual = root.getAttribute("data-theme");
-    if (!actual) actual = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    if (!actual) actual = "dark";
     var nuevo = actual === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", nuevo);
     try { localStorage.setItem("taha-tema", nuevo); } catch (e) {}
@@ -582,7 +576,7 @@
   var scenes = Array.prototype.slice.call(document.querySelectorAll(".scene"));
   var links = Array.prototype.slice.call(document.querySelectorAll("#menu a"));
   var dots = Array.prototype.slice.call(document.querySelectorAll("#dots a"));
-  var ids = ["inicio", "sobre-mi", "proyectos", "formacion", "contacto"];
+  var ids = ["inicio", "sobre-mi", "proyectos", "asistente", "formacion", "contacto"];
   var ticking = false;
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -606,7 +600,7 @@
       if (dist < bestDist) { bestDist = dist; best = s; }
     });
     var id = best ? best.id : "inicio";
-    if (id === "piezas" || id === "asistente") id = "proyectos";
+    if (id === "piezas") id = "proyectos";
     var idx = ids.indexOf(id);
     links.forEach(function (a, i) { a.classList.toggle("on", i === idx); });
     dots.forEach(function (a, i) { a.classList.toggle("on", i === idx); });
