@@ -235,7 +235,7 @@
       var t3 = el("td"), n = dias(d), al = alerta(d);
       if (n === null) t3.textContent = "—";
       else if (d.rec === "Resuelto") t3.textContent = "Cerrado";
-      else { t3.appendChild(el("span", "", "Día " + n + "/14 ")); if (al) { var g = el("span", "tag pend", al === "venc" ? "Plazo vencido" : "Avisar hoy"); g.style.color = al === "venc" ? "#FF3347" : "#FFB347"; g.style.borderColor = g.style.color; t3.appendChild(g); } }
+      else { t3.appendChild(el("div", "", "Día " + n + "/14")); if (al) { var g = el("span", "tag pend", al === "venc" ? "Plazo vencido" : "Avisar hoy"); g.style.color = al === "venc" ? "#FF3347" : "#FFB347"; g.style.borderColor = g.style.color; t3.appendChild(g); } }
       tr.appendChild(t3); tb.appendChild(tr);
     });
   }
