@@ -74,9 +74,10 @@
   .chip { font-family: var(--font-mono); font-size: 12px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
   .chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
   .scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 760px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 900px; }
   th { text-align: start; font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); }
   td { padding: 11px 10px; border-bottom: 1px dashed var(--line); font-variant-numeric: tabular-nums; }
+  td { white-space: nowrap; }
   td.num, th.num { text-align: end; }
   tr:last-child td { border-bottom: 0; }
   .tag { display: inline-block; font-family: var(--font-mono); font-size: 11.5px; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--line); }
@@ -120,7 +121,7 @@
   <div class="grid">
     <section class="panel"><h2>Compensación por tipo de incidencia</h2><div class="bars" id="bars-tipo"></div></section>
     <section class="panel"><h2>Casos por aerolínea</h2><div class="bars" id="bars-aero"></div></section>
-    <section class="panel"><h2>Estado de notificación</h2><div class="donut-wrap"><div class="donut" id="donut" role="img" aria-label="Reparto por estado"></div><ul class="legend" id="legend"></ul></div></section>
+    <section class="panel"><h2>Estado de la reclamación</h2><div class="donut-wrap"><div class="donut" id="donut" role="img" aria-label="Reparto por estado"></div><ul class="legend" id="legend"></ul></div></section>
   </div>
 
   <section class="tablebox">
@@ -129,18 +130,18 @@
       <div class="chips" id="filters" role="group" aria-label="Filtrar por elegibilidad"></div>
     </div>
     <div class="scroll"><table>
-      <thead><tr><th>Expediente</th><th>Pasajero</th><th>Vuelo</th><th>Ruta</th><th>Incidencia</th><th class="num">Retraso</th><th class="num">Compensación</th><th>Elegible</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Expediente</th><th>Pasajero</th><th>Vuelo</th><th>Ruta</th><th>Incidencia</th><th class="num">Compensación</th><th>Elegible</th><th>Estado</th><th>Plazo AESA</th></tr></thead>
       <tbody id="rows"></tbody>
     </table></div>
   </section>
 
-  <p class="note">Datos sintéticos de demostración. Los nombres se muestran abreviados y no se enseñan correos ni teléfonos. El panel lee el CRM publicado como CSV; si no puede conectarse, muestra una copia de ejemplo.</p>
+  <p class="note">Plazo AESA: contador de 14 días desde el envío, con aviso desde el día 12 (según el acuerdo provisional de la reforma 2026, pendiente de confirmación oficial). Datos sintéticos de demostración. Los nombres se muestran abreviados y no se enseñan correos ni teléfonos. El panel lee el CRM publicado como CSV; si no puede conectarse, muestra una copia de ejemplo.</p>
 </div>
 
 <script>
 (function () {
   var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSUPe2RMDvJKsmm3UGjtiC1Zd_zVyt2dHbRQI6VAo-r1E2ohCbF-cwQSxkGFgVqxSKMYIKlYcIHGJzR/pub?gid=1875536964&single=true&output=csv";
-  var FALLBACK = [{"ID Expediente": "EXP-2026-001", "Nombre Pasajero": "Juan", "Apellidos": "G", "Numero Vuelo": "UX5031", "Vuelo Afectado": "AEA5031", "Aerolinea": "Air Europa", "IATA Origen": "MAD", "IATA Destino": "AGP", "Retraso Llegada Min": "185", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-002", "Nombre Pasajero": "María", "Apellidos": "L", "Numero Vuelo": "VY3456", "Vuelo Afectado": "VLG3456", "Aerolinea": "Vueling", "IATA Origen": "BCN", "IATA Destino": "LHR", "Retraso Llegada Min": "0", "Tipo Incidencia": "cancellation", "Compensacion EUR": "400", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-003", "Nombre Pasajero": "Ahmed", "Apellidos": "B", "Numero Vuelo": "AT504", "Vuelo Afectado": "AT504", "Aerolinea": "Royal Air Maroc", "IATA Origen": "MAD", "IATA Destino": "CMN", "Retraso Llegada Min": "260", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-004", "Nombre Pasajero": "Elena", "Apellidos": "M", "Numero Vuelo": "IB6250", "Vuelo Afectado": "IB6250", "Aerolinea": "Iberia", "IATA Origen": "MAD", "IATA Destino": "JFK", "Retraso Llegada Min": "375", "Tipo Incidencia": "delay", "Compensacion EUR": "600", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-005", "Nombre Pasajero": "Carlos", "Apellidos": "R", "Numero Vuelo": "U21895", "Vuelo Afectado": "U21895", "Aerolinea": "easyJet", "IATA Origen": "MAD", "IATA Destino": "FCO", "Retraso Llegada Min": "110", "Tipo Incidencia": "delay", "Compensacion EUR": "0", "Elegible Compensacion": "NO", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-006", "Nombre Pasajero": "Fatima", "Apellidos": "O", "Numero Vuelo": "AF1234", "Vuelo Afectado": "AF1234", "Aerolinea": "Air France", "IATA Origen": "CDG", "IATA Destino": "MAD", "Retraso Llegada Min": "0", "Tipo Incidencia": "cancellation", "Compensacion EUR": "0", "Elegible Compensacion": "NO", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-007", "Nombre Pasajero": "Pedro", "Apellidos": "S", "Numero Vuelo": "UX5031", "Vuelo Afectado": "AEA5031", "Aerolinea": "Air Europa", "IATA Origen": "MAD", "IATA Destino": "AGP", "Retraso Llegada Min": "185", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-008", "Nombre Pasajero": "Anna", "Apellidos": "K", "Numero Vuelo": "LH1806", "Vuelo Afectado": "LH1806", "Aerolinea": "Lufthansa", "IATA Origen": "MAD", "IATA Destino": "FRA", "Retraso Llegada Min": "0", "Tipo Incidencia": "denied_boarding", "Compensacion EUR": "400", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-009", "Nombre Pasajero": "Mohammed", "Apellidos": "A", "Numero Vuelo": "IB3166", "Vuelo Afectado": "IB3166", "Aerolinea": "Iberia", "IATA Origen": "LHR", "IATA Destino": "MAD", "Retraso Llegada Min": "380", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE"}, {"ID Expediente": "EXP-2026-010", "Nombre Pasajero": "Isabelle", "Apellidos": "D", "Numero Vuelo": "IB6401", "Vuelo Afectado": "IB6401", "Aerolinea": "Iberia", "IATA Origen": "MAD", "IATA Destino": "DXB", "Retraso Llegada Min": "0", "Tipo Incidencia": "delay", "Compensacion EUR": "0", "Elegible Compensacion": "PENDIENTE", "Estado Notificacion": "PENDIENTE"}];
+  var FALLBACK = [{"ID Expediente": "EXP-2026-001", "Nombre Pasajero": "Juan", "Apellidos": "G", "Numero Vuelo": "UX5031", "Vuelo Afectado": "AEA5031", "Aerolinea": "Air Europa", "IATA Origen": "MAD", "IATA Destino": "AGP", "Retraso Llegada Min": "185", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "Enviado a AESA", "Fecha Envio AESA": "2026-10-26"}, {"ID Expediente": "EXP-2026-002", "Nombre Pasajero": "María", "Apellidos": "L", "Numero Vuelo": "VY3456", "Vuelo Afectado": "VLG3456", "Aerolinea": "Vueling", "IATA Origen": "BCN", "IATA Destino": "LHR", "Retraso Llegada Min": "0", "Tipo Incidencia": "cancellation", "Compensacion EUR": "400", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "Notificado", "Fecha Envio AESA": ""}, {"ID Expediente": "EXP-2026-003", "Nombre Pasajero": "Ahmed", "Apellidos": "B", "Numero Vuelo": "AT504", "Vuelo Afectado": "AT504", "Aerolinea": "Royal Air Maroc", "IATA Origen": "MAD", "IATA Destino": "CMN", "Retraso Llegada Min": "260", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "Enviado a AESA", "Fecha Envio AESA": "2026-11-03"}, {"ID Expediente": "EXP-2026-004", "Nombre Pasajero": "Elena", "Apellidos": "M", "Numero Vuelo": "IB6250", "Vuelo Afectado": "IB6250", "Aerolinea": "Iberia", "IATA Origen": "MAD", "IATA Destino": "JFK", "Retraso Llegada Min": "375", "Tipo Incidencia": "delay", "Compensacion EUR": "600", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "Resuelto", "Fecha Envio AESA": "2026-10-20"}, {"ID Expediente": "EXP-2026-005", "Nombre Pasajero": "Carlos", "Apellidos": "R", "Numero Vuelo": "U21895", "Vuelo Afectado": "U21895", "Aerolinea": "easyJet", "IATA Origen": "MAD", "IATA Destino": "FCO", "Retraso Llegada Min": "110", "Tipo Incidencia": "delay", "Compensacion EUR": "0", "Elegible Compensacion": "NO", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "No aplica", "Fecha Envio AESA": ""}, {"ID Expediente": "EXP-2026-006", "Nombre Pasajero": "Fatima", "Apellidos": "O", "Numero Vuelo": "AF1234", "Vuelo Afectado": "AF1234", "Aerolinea": "Air France", "IATA Origen": "CDG", "IATA Destino": "MAD", "Retraso Llegada Min": "0", "Tipo Incidencia": "cancellation", "Compensacion EUR": "0", "Elegible Compensacion": "NO", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "No aplica", "Fecha Envio AESA": ""}, {"ID Expediente": "EXP-2026-007", "Nombre Pasajero": "Pedro", "Apellidos": "S", "Numero Vuelo": "UX5031", "Vuelo Afectado": "AEA5031", "Aerolinea": "Air Europa", "IATA Origen": "MAD", "IATA Destino": "AGP", "Retraso Llegada Min": "185", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "Doc. Pendiente", "Fecha Envio AESA": ""}, {"ID Expediente": "EXP-2026-008", "Nombre Pasajero": "Anna", "Apellidos": "K", "Numero Vuelo": "LH1806", "Vuelo Afectado": "LH1806", "Aerolinea": "Lufthansa", "IATA Origen": "MAD", "IATA Destino": "FRA", "Retraso Llegada Min": "0", "Tipo Incidencia": "denied_boarding", "Compensacion EUR": "400", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "Doc. Completa", "Fecha Envio AESA": ""}, {"ID Expediente": "EXP-2026-009", "Nombre Pasajero": "Mohammed", "Apellidos": "A", "Numero Vuelo": "IB3166", "Vuelo Afectado": "IB3166", "Aerolinea": "Iberia", "IATA Origen": "LHR", "IATA Destino": "MAD", "Retraso Llegada Min": "380", "Tipo Incidencia": "delay", "Compensacion EUR": "250", "Elegible Compensacion": "SÍ", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "Escalado", "Fecha Envio AESA": "2026-10-18"}, {"ID Expediente": "EXP-2026-010", "Nombre Pasajero": "Isabelle", "Apellidos": "D", "Numero Vuelo": "IB6401", "Vuelo Afectado": "IB6401", "Aerolinea": "Iberia", "IATA Origen": "MAD", "IATA Destino": "DXB", "Retraso Llegada Min": "0", "Tipo Incidencia": "delay", "Compensacion EUR": "0", "Elegible Compensacion": "PENDIENTE", "Estado Notificacion": "PENDIENTE", "Estado Reclamacion": "Notificado", "Fecha Envio AESA": ""}];
   var TIPOS = { delay: "Retraso", cancellation: "Cancelación", denied_boarding: "Denegación de embarque", downgrade: "Cambio a clase inferior" };
   var data = [], filtro = "todos";
 
@@ -170,8 +171,18 @@
       aero: r["Aerolinea"], ruta: (r["IATA Origen"] || "") + " → " + (r["IATA Destino"] || ""),
       tipo: r["Tipo Incidencia"], ret: parseInt(r["Retraso Llegada Min"] || "0", 10) || 0,
       comp: parseFloat((r["Compensacion EUR"] || "0").replace(",", ".")) || 0,
-      eleg: (r["Elegible Compensacion"] || "").toUpperCase().replace("Í", "I"), estado: (r["Estado Notificacion"] || "").toUpperCase() || "SIN ESTADO"
+      eleg: (r["Elegible Compensacion"] || "").toUpperCase().replace("Í", "I"), estado: (r["Estado Notificacion"] || "").toUpperCase() || "SIN ESTADO",
+      rec: r["Estado Reclamacion"] || "—", envio: r["Fecha Envio AESA"] || ""
     };
+  }
+  function dias(d) {
+    if (!d.envio) return null; var p = d.envio.split("-"); if (p.length < 3) return null;
+    var a = Date.UTC(+p[0], +p[1] - 1, +p[2]), n = new Date(), b = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+    return Math.floor((b - a) / 86400000);
+  }
+  function alerta(d) {
+    var n = dias(d); if (n === null || d.rec !== "Enviado a AESA") return null;
+    return n > 14 ? "venc" : (n >= 12 ? "dia12" : null);
   }
   function eur(n) { return n.toLocaleString("es-ES") + " €"; }
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
@@ -186,20 +197,21 @@
       b.appendChild(r); b.appendChild(t); box.appendChild(b);
     });
   }
+  var SC = { "Notificado": "#6E8BFF", "Doc. Pendiente": "#FFB347", "Doc. Completa": "#B04A9E", "Enviado a AESA": "#FF3347", "Resuelto": "#5ED394", "Escalado": "#FF8A5B", "No aplica": "#A98C90" };
   var COLORS = ["#FF3347", "#FFB347", "#B04A9E", "#5ED394", "#6E8BFF", "#A98C90"];
   function render() {
     var eleg = data.filter(function (d) { return d.eleg === "SI"; });
     var total = eleg.reduce(function (s, d) { return s + d.comp; }, 0);
-    var pend = data.filter(function (d) { return d.estado === "PENDIENTE"; }).length;
+    var pend = data.filter(function (d) { return alerta(d); }).length;
     var k = document.getElementById("kpis"); k.textContent = "";
-    [[data.length, "casos en el CRM"], [eleg.length, "elegibles para compensación"], [eur(total), "compensación estimada total"], [pend, "pendientes de notificar"]].forEach(function (x) {
+    [[data.length, "casos en el CRM"], [eleg.length, "elegibles para compensación"], [eur(total), "compensación estimada total"], [pend, "alertas de plazo AESA"]].forEach(function (x) {
       var d = el("div", "kpi"); d.appendChild(el("strong", "", String(x[0]))); d.appendChild(el("span", "", x[1])); k.appendChild(d);
     });
     bars("bars-tipo", group(eleg, "tipo", function (x) { return x.comp; }).map(function (p) { return [TIPOS[p[0]] || p[0], p[1]]; }), eur);
     bars("bars-aero", group(data, "aero", function () { return 1; }), function (n) { return n + (n === 1 ? " caso" : " casos"); });
-    var est = group(data, "estado", function () { return 1; }), acc = 0, parts = [], lg = document.getElementById("legend"); lg.textContent = "";
+    var est = group(data, "rec", function () { return 1; }), acc = 0, parts = [], lg = document.getElementById("legend"); lg.textContent = "";
     est.forEach(function (p, i) {
-      var c = COLORS[i % COLORS.length], a0 = acc / data.length * 360; acc += p[1]; parts.push(c + " " + a0 + "deg " + (acc / data.length * 360) + "deg");
+      var c = SC[p[0]] || COLORS[i % COLORS.length], a0 = acc / data.length * 360; acc += p[1]; parts.push(c + " " + a0 + "deg " + (acc / data.length * 360) + "deg");
       var li = el("li"), sw = el("i"); sw.style.background = c; li.appendChild(sw); li.appendChild(el("span", "", p[0])); li.appendChild(el("b", "", String(p[1]))); lg.appendChild(li);
     });
     document.getElementById("donut").style.background = "conic-gradient(" + (parts.join(",") || "#3B1A20 0deg 360deg") + ")";
@@ -207,20 +219,24 @@
   }
   function filters() {
     var f = document.getElementById("filters"); f.textContent = "";
-    [["todos", "Todos"], ["SI", "Elegibles"], ["NO", "No elegibles"], ["PEND", "Pendientes"]].forEach(function (o) {
+    [["todos", "Todos"], ["SI", "Elegibles"], ["NO", "No elegibles"], ["ALERTA", "Con alerta"]].forEach(function (o) {
       var b = el("button", "chip", o[1]); b.type = "button"; b.setAttribute("aria-pressed", filtro === o[0] ? "true" : "false");
       b.addEventListener("click", function () { filtro = o[0]; filters(); table(); }); f.appendChild(b);
     });
   }
   function table() {
     var tb = document.getElementById("rows"); tb.textContent = "";
-    data.filter(function (d) { return filtro === "todos" || (filtro === "PEND" ? d.estado === "PENDIENTE" : d.eleg === filtro); }).forEach(function (d) {
+    data.filter(function (d) { return filtro === "todos" || (filtro === "ALERTA" ? !!alerta(d) : d.eleg === filtro); }).forEach(function (d) {
       var tr = el("tr");
-      [d.id, d.pax, d.vuelo, d.ruta, TIPOS[d.tipo] || d.tipo].forEach(function (t) { tr.appendChild(el("td", "", t)); });
-      tr.appendChild(el("td", "num", d.ret ? d.ret + " min" : "—")); tr.appendChild(el("td", "num", d.comp ? eur(d.comp) : "—"));
+      [d.id, d.pax, d.vuelo, d.ruta, TIPOS[d.tipo] || d.tipo].forEach(function (x) { tr.appendChild(el("td", "", x)); });
+      tr.appendChild(el("td", "num", d.comp ? eur(d.comp) : "—"));
       var t1 = el("td"); t1.appendChild(el("span", "tag " + (d.eleg === "SI" ? "si" : "no"), d.eleg === "SI" ? "Sí" : (d.eleg === "NO" ? "No" : d.eleg || "—"))); tr.appendChild(t1);
-      var t2 = el("td"); t2.appendChild(el("span", "tag " + (d.estado === "PENDIENTE" ? "pend" : "ok"), d.estado)); tr.appendChild(t2);
-      tb.appendChild(tr);
+      var t2 = el("td"), sp = el("span", "tag", d.rec); sp.style.color = SC[d.rec] || ""; sp.style.borderColor = SC[d.rec] || ""; t2.appendChild(sp); tr.appendChild(t2);
+      var t3 = el("td"), n = dias(d), al = alerta(d);
+      if (n === null) t3.textContent = "—";
+      else if (d.rec === "Resuelto") t3.textContent = "Cerrado";
+      else { t3.appendChild(el("span", "", "Día " + n + "/14 ")); if (al) { var g = el("span", "tag pend", al === "venc" ? "Plazo vencido" : "Avisar hoy"); g.style.color = al === "venc" ? "#FF3347" : "#FFB347"; g.style.borderColor = g.style.color; t3.appendChild(g); } }
+      tr.appendChild(t3); tb.appendChild(tr);
     });
   }
   function setState(live, msg) {
