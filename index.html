@@ -532,13 +532,13 @@
 
   document.getElementById("year").textContent = new Date().getFullYear();
 
-  try { var tema = localStorage.getItem("taha-tema"); if (tema) root.setAttribute("data-theme", tema); } catch (e) {}
+  try { var tema = localStorage.getItem("taha-tema-v2"); if (tema) root.setAttribute("data-theme", tema); } catch (e) {}
   document.getElementById("theme").addEventListener("click", function () {
     var actual = root.getAttribute("data-theme");
     if (!actual) actual = "dark";
     var nuevo = actual === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", nuevo);
-    try { localStorage.setItem("taha-tema", nuevo); } catch (e) {}
+    try { localStorage.setItem("taha-tema-v2", nuevo); } catch (e) {}
   });
 })();
 </script>
